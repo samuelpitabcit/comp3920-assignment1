@@ -85,7 +85,7 @@ function isPasswordStrong(password) {
  * @param {import("express").NextFunction} next
  */
 function filterNotLoggedIn(req, res, next) {
-    if (req.session.userId == null) {
+    if (!req.session.authenticated) {
         res.status(307).redirect("/login");
         return;
     }
@@ -101,7 +101,7 @@ function filterNotLoggedIn(req, res, next) {
  * @param {import("express").NextFunction} next
  */
 function filterLoggedIn(req, res, next) {
-    if (req.session.userId != null) {
+    if (req.session.authenticated) {
         res.status(301).redirect("/account");
         return;
     }
@@ -131,6 +131,8 @@ app.post("/api/login", filterLoggedIn, async (req, res) => {
 
     for (const { user_id, passwd } of rows) {
         if (bcrypt.compareSync(login.password, passwd)) {
+            req.session.authenticated = true;
+            req.session.username = login.username;
             req.session.userId = user_id;
             res.status(301).redirect("/account");
             return;
@@ -162,17 +164,16 @@ app.post("/api/register", filterLoggedIn, async (req, res) => {
         return;
     }
 
-    await bcrypt
-        .hash(password, SALT_ROUNDS)
-        .then((passwordHash) =>
-            pool.query("INSERT INTO user (username, passwd) VALUES (?, ?)", [
-                username,
-                passwordHash,
-            ]),
-        )
+    const passwordHash = bcrypt.hashSync(password, SALT_ROUNDS);
+
+    await pool
+        .query("INSERT INTO user (username, passwd) VALUES (?, ?)", [username, passwordHash])
         .then(([results]) => {
+            req.session.authenticated = true;
+            req.session.username = username;
             req.session.userId = results.insertId;
-            req.status(301).redirect("/account");
+
+            res.status(301).redirect("/account");
         })
         .catch((reason) => res.status(401).send("Failed to create an account | " + reason));
 });
@@ -194,7 +195,7 @@ app.get("/register", filterLoggedIn, (req, res) => {
 });
 
 app.get("/account", filterNotLoggedIn, (req, res) => {
-    res.send("Account page.");
+    res.render("account", { username: req.session.username });
 });
 
 app.use((_, res) => {
