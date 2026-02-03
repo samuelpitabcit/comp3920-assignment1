@@ -21,6 +21,7 @@ const pool = mysql.createPool({
     user: process.env.MYSQL_USER,
     password: process.env.MYSQL_PASSWORD,
     database: process.env.MYSQL_DATABASE,
+    multipleStatements: true,
 });
 
 //
@@ -123,11 +124,15 @@ app.post("/api/login", filterLoggedIn, async (req, res) => {
     /** @type {LoginBody} */
     const login = req.body;
 
+    // const [rows] = await pool
+    //     .query("SELECT user_id, passwd FROM user WHERE username = ?", [login.username])
+    //     .catch((reason) => {
+    //         res.status(500).send(reason);
+    //     });
+
     const [rows] = await pool
-        .query("SELECT user_id, passwd FROM user WHERE username = ?", [login.username])
-        .catch((reason) => {
-            res.status(500).send(reason);
-        });
+        .query(`SELECT user_id, passwd FROM user WHERE username = ${login.username}"`)
+        .catch((reason) => res.status(500).send(reason));
 
     for (const { user_id, passwd } of rows) {
         if (bcrypt.compareSync(login.password, passwd)) {
@@ -167,7 +172,8 @@ app.post("/api/register", filterLoggedIn, async (req, res) => {
     const passwordHash = bcrypt.hashSync(password, SALT_ROUNDS);
 
     await pool
-        .query("INSERT INTO user (username, passwd) VALUES (?, ?)", [username, passwordHash])
+        // .query("INSERT INTO user (username, passwd) VALUES (?, ?)", [username, passwordHash])
+        .query(`INSERT INTO user (username, passwd) VALUES (${username}, ${passwordHash})`)
         .then(([results]) => {
             req.session.authenticated = true;
             req.session.username = username;
