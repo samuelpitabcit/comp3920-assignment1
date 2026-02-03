@@ -7,7 +7,11 @@
     </head>
     <body>
         <h1>Hello, <%= username %></h1>
-        <img src="https://media.sammuu.dev/profile.jpg" alt="sammuu" class="image" />
+        <img
+            src="/image<%= Math.floor(Math.random() * 3) %>.jpg"
+            alt="Profile Picture"
+            class="image"
+        />
         <a href="/">Homepage</a>
         <a href="/api/logout">Logout</a>
     </body>
