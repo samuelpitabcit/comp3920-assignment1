@@ -131,7 +131,7 @@ app.post("/api/login", filterLoggedIn, async (req, res) => {
     //     });
 
     const [rows] = await pool
-        .query(`SELECT user_id, passwd FROM user WHERE username = ${login.username}"`)
+        .query(`SELECT user_id, passwd FROM user WHERE username = '${login.username}'"`)
         .catch((reason) => res.status(500).send(reason));
 
     for (const { user_id, passwd } of rows) {
@@ -173,7 +173,7 @@ app.post("/api/register", filterLoggedIn, async (req, res) => {
 
     await pool
         // .query("INSERT INTO user (username, passwd) VALUES (?, ?)", [username, passwordHash])
-        .query(`INSERT INTO user (username, passwd) VALUES (${username}, ${passwordHash})`)
+        .query(`INSERT INTO user (username, passwd) VALUES ('${username}', '${passwordHash}')`)
         .then(([results]) => {
             req.session.authenticated = true;
             req.session.username = username;
