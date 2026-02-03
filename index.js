@@ -131,7 +131,7 @@ app.post("/api/login", filterLoggedIn, async (req, res) => {
     //     });
 
     const [rows] = await pool
-        .query(`SELECT user_id, passwd FROM user WHERE username = '${login.username}'"`)
+        .query(`SELECT user_id, passwd FROM user WHERE username = '${login.username}'`)
         .catch((reason) => res.status(500).send(reason));
 
     for (const { user_id, passwd } of rows) {
